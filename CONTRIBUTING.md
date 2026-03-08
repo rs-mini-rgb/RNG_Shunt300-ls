@@ -33,7 +33,7 @@ Thank you for your interest in contributing to RNG Shunt300 Live Simulator! This
 4. **Verify setup:**
    ```bash
    python src/shunt300_live_simulator.py
-   # Navigate to http://localhost:8089
+   # Navigate to http://localhost:8081
    ```
 
 ## Development Workflow
@@ -62,7 +62,7 @@ Thank you for your interest in contributing to RNG Shunt300 Live Simulator! This
 3. **Test your changes:**
    ```bash
    python src/shunt300_live_simulator.py
-   # Test in browser at http://localhost:8089
+   # Test in browser at http://localhost:8081
    ```
 
 4. **Commit with clear messages:**

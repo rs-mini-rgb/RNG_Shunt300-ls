@@ -33,7 +33,7 @@ A standalone web-based simulator and live data monitor for the Renogy Shunt300 (
    ```
 
 4. **Open in browser:**
-   Navigate to `http://localhost:8089` (default port)
+   Navigate to `http://localhost:8081` (default port)
 
 ### Using Pre-Built Executable
 

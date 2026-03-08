@@ -32,14 +32,14 @@ RNG Shunt300 Live Simulator is a standalone web-based application for real-time 
 2. Run the installer
 3. Follow the setup wizard
 4. Launch from Start Menu or Desktop shortcut
-5. Browser opens to `http://localhost:8089`
+5. Browser opens to `http://localhost:8081`
 
 ### Option 2: Portable (No Installation)
 
 1. Download `Renogy_Shunt300LS_Portable.zip`
 2. Extract to desired folder
 3. Run `Shunt300LiveSimulator.exe`
-4. Browser opens automatically to `http://localhost:8089`
+4. Browser opens automatically to `http://localhost:8081`
 
 ### Verify Downloaded Files
 
@@ -157,11 +157,11 @@ Until then, the SHA256 hash verification and open-source transparency provide se
 - **Windows Only**: Standalone build targets Windows 10/11 64-bit
 - **No RSSI Display**: RSSI monitoring limited by Windows Bluetooth API
 - **Single Device**: One concurrent device connection per instance
-- **Local Network Only**: Dashboard accessible locally (port 8089)
+- **Local Network Only**: Dashboard accessible locally (port 8081)
 
 ## Network & Security
 
-- **Local Only**: Dashboard runs on `http://localhost:8089`
+- **Local Only**: Dashboard runs on `http://localhost:8081`
 - **No Cloud**: All data stays on your machine
 - **No Sharing**: Not designed for multi-user network access
 - **Firewall**: Windows may ask for firewall access on first run
