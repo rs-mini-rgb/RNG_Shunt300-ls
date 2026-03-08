@@ -34,10 +34,15 @@ dist/
 *.exe
 *.msi
 *.app
+*.zip
 
 # Installer output
 installer_output/
 /*.exe
+/*.zip
+
+# Release assets (created locally before upload)
+Renogy_Shunt300LS_Portable.zip
 
 # Database
 device_list.json
