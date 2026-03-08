@@ -41,6 +41,8 @@ RNG Shunt300 Live Simulator is a standalone web-based application for real-time 
 3. Run `Shunt300LiveSimulator.exe`
 4. Browser opens automatically to `http://localhost:8081`
 
+**⚠️ Important**: Windows may block downloaded files with a security warning. To avoid this, **unblock the file before running** by right-clicking it → **Properties** → check **"Unblock"** → **Apply**. See [Windows SmartScreen / Security Warning](#windows-smartscreen--security-warning) for detailed instructions.
+
 ### Verify Downloaded Files
 
 All downloads should be hash-verified for integrity. Compare the SHA256 hash of your downloaded file with the values below.
@@ -103,16 +105,16 @@ This warning is triggered by two factors:
 2. Click **"Run anyway"** at the bottom
 3. The application will launch normally
 
-**Option 2: Unblock the file before running** (Alternative method)
+**Option 2: Unblock the file before running** (Prevents SmartScreen dialog entirely)
 
 1. Right-click the downloaded `.exe` or `.zip` file
 2. Select **Properties**
 3. At the bottom of the **General** tab, look for **"Security"** section
 4. Check the box: **"Unblock"** (or click **"Unblock"** button)
 5. Click **"Apply"** → **"OK"**
-6. Run the file normally
+6. Run the file normally - **no SmartScreen warning will appear**
 
-**Note**: After you unblock and run the application once, Windows SmartScreen builds trust. Subsequent runs won't show the warning.
+**Note**: Unblocking removes the Mark of the Web (MOTW) flag, allowing the file to run without warnings. This is the recommended approach if you want to avoid the SmartScreen dialog.
 
 ### Future Plans
 
