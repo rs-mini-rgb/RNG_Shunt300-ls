@@ -2,20 +2,34 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+The latest stable release receives security fixes.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| Latest  | Yes       |
+| Older   | No        |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Please do not open public GitHub issues for security vulnerabilities.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Report vulnerabilities using one of these channels:
+
+- GitHub Security Advisories (preferred):
+	`https://github.com/rs-mini-rgb/RNG_Shunt300-ls/security/advisories/new`
+- Email: `richsantos78@gmail.com`
+
+Include:
+
+- A clear description of the issue and impact.
+- Steps to reproduce.
+- Affected version/commit.
+- Any proof-of-concept details.
+
+Response targets:
+
+- Initial response: within 72 hours.
+- Status updates: at least every 7 days until resolution.
+
+If the report is valid, we will coordinate a fix and responsible disclosure,
+then publish release notes and mitigation guidance.

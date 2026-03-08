@@ -1,0 +1,8 @@
+# Default owner
+* @rs-mini-rgb
+
+# Security-sensitive paths
+.github/workflows/* @rs-mini-rgb
+scripts/* @rs-mini-rgb
+docs/CODE_SIGNING_POLICY.md @rs-mini-rgb
+SECURITY.md @rs-mini-rgb

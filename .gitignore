@@ -50,6 +50,25 @@ Renogy_Shunt300LS_Portable.zip
 .secrets/
 vault/
 
+# Credentials and key material
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.snk
+*.asc
+id_rsa
+id_ed25519
+
+# Local maintainer/operations artifacts
+scripts/*.xlsx
+scripts/private/
+SHA256SUMS_v*.txt
+
 # Database
 device_list.json
 *.db
