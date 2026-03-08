@@ -41,6 +41,8 @@ Download the latest `Renogy_Shunt300LS_Setup.exe` from [releases](https://github
 
 **⚠️ Windows SmartScreen Warning**: You may see "Windows protected your PC" when running the installer. This is normal for new applications without code signing certificates. Click **"More info"** → **"Run anyway"** to proceed. See [RELEASE_NOTES_v1.0.0.md](RELEASE_NOTES_v1.0.0.md#windows-smartscreen--security-warning) for detailed security information.
 
+**Code signing policy**: See [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md).
+
 ## Project Structure
 
 ```

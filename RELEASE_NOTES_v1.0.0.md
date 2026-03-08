@@ -123,6 +123,8 @@ We plan to add a digital code-signing certificate in future releases once:
 - Funds are available for purchasing a certificate from a trusted CA (Certificate Authority)
 - The project demonstrates long-term sustainability
 
+Code signing policy: [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md)
+
 Until then, the SHA256 hash verification and open-source transparency provide security assurance.
 
 ## Getting Started
