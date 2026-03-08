@@ -43,6 +43,8 @@ Download the latest `Renogy_Shunt300LS_Setup.exe` from [releases](https://github
 
 **Code signing policy**: See [docs/CODE_SIGNING_POLICY.md](docs/CODE_SIGNING_POLICY.md).
 
+**Signed release pipeline**: GitHub Actions workflow [release-build-sign.yml](.github/workflows/release-build-sign.yml) builds and signs release artifacts through SignPath once onboarding secrets are configured.
+
 ## Project Structure
 
 ```

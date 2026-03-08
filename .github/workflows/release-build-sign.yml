@@ -1,0 +1,177 @@
+name: Release Build and Sign
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to upload assets to (for example: v1.0.1)"
+        required: true
+        type: string
+
+jobs:
+  build-sign-publish:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: read
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Prepare build context
+        shell: pwsh
+        run: |
+          Copy-Item src\shunt300_live_simulator.py build\ -Force
+          Copy-Item src\shunt300_live_ui.html build\ -Force
+          Copy-Item src\shunt300_database.py build\ -Force
+          Copy-Item resources\RSHST-B02P300.webp build\ -Force
+          Copy-Item resources\installer_icon.ico build\ -Force
+          Copy-Item resources\installer_logo_banner.bmp build\ -Force
+          Copy-Item resources\installer_logo_small.bmp build\ -Force
+          Copy-Item LICENSE.txt build\ -Force
+          Copy-Item README.md build\ -Force
+          Copy-Item QUICKSTART.md build\ -Force
+          Copy-Item RELEASE_NOTES_v1.0.0.md build\ -Force
+
+      - name: Build executable (PyInstaller)
+        shell: pwsh
+        run: |
+          Push-Location build
+          python -m PyInstaller --noconfirm --clean Shunt300LiveSimulator.spec
+          Pop-Location
+
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          Push-Location build
+          .\build_installer.ps1
+          Pop-Location
+
+      - name: Create release artifacts
+        shell: pwsh
+        run: |
+          if (Test-Path release-assets) {
+            Remove-Item release-assets -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path release-assets | Out-Null
+
+          Copy-Item build\installer_output\Renogy_Shunt300LS_Setup.exe release-assets\ -Force
+
+          Compress-Archive -Path build\dist\Shunt300LiveSimulator\* -DestinationPath release-assets\Renogy_Shunt300LS_Portable.zip -CompressionLevel Optimal
+          Copy-Item verify_download.bat release-assets\ -Force
+
+      - name: Upload unsigned artifact bundle
+        id: upload_unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-unsigned
+          path: release-assets/*
+
+      - name: Validate SignPath secrets
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+        run: |
+          $missing = @()
+          if ([string]::IsNullOrWhiteSpace($env:SIGNPATH_API_TOKEN)) { $missing += 'SIGNPATH_API_TOKEN' }
+          if ([string]::IsNullOrWhiteSpace($env:SIGNPATH_ORGANIZATION_ID)) { $missing += 'SIGNPATH_ORGANIZATION_ID' }
+          if ([string]::IsNullOrWhiteSpace($env:SIGNPATH_PROJECT_SLUG)) { $missing += 'SIGNPATH_PROJECT_SLUG' }
+          if ([string]::IsNullOrWhiteSpace($env:SIGNPATH_SIGNING_POLICY_SLUG)) { $missing += 'SIGNPATH_SIGNING_POLICY_SLUG' }
+
+          if ($missing.Count -gt 0) {
+            throw "Missing required GitHub secrets: $($missing -join ', '). Configure SignPath before publishing signed releases."
+          }
+
+      - name: Submit signing request to SignPath
+        id: signpath
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ secrets.SIGNPATH_ARTIFACT_CONFIG_SLUG || 'default' }}
+          github-artifact-id: ${{ steps.upload_unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-output
+
+      - name: Verify Authenticode signatures
+        shell: pwsh
+        run: |
+          $targets = @(
+            'signed-output/Renogy_Shunt300LS_Setup.exe'
+          )
+
+          foreach ($target in $targets) {
+            if (-not (Test-Path $target)) {
+              throw "Signed file not found: $target"
+            }
+
+            $sig = Get-AuthenticodeSignature $target
+            if ($sig.Status -ne 'Valid') {
+              throw "Invalid signature status for $target: $($sig.Status)"
+            }
+          }
+
+      - name: Recalculate hashes for signed artifacts
+        shell: pwsh
+        run: |
+          $setup = 'signed-output/Renogy_Shunt300LS_Setup.exe'
+          $portable = 'signed-output/Renogy_Shunt300LS_Portable.zip'
+          $batch = 'signed-output/verify_download.bat'
+
+          if (-not (Test-Path $portable)) {
+            throw 'Signed portable ZIP not found in signed-output.'
+          }
+          if (-not (Test-Path $batch)) {
+            Copy-Item release-assets\verify_download.bat signed-output\verify_download.bat -Force
+          }
+
+          $setupHash = (Get-FileHash -Path $setup -Algorithm SHA256).Hash
+          $portableHash = (Get-FileHash -Path $portable -Algorithm SHA256).Hash
+
+          $hashLines = @(
+            'Renogy_Shunt300LS_Setup.exe'
+            $setupHash
+            ''
+            'Renogy_Shunt300LS_Portable.zip'
+            $portableHash
+          )
+          $hashLines | Set-Content signed-output\SHA256SUMS.txt -Encoding UTF8
+
+      - name: Upload signed assets to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload $env:RELEASE_TAG `
+            signed-output\Renogy_Shunt300LS_Setup.exe `
+            signed-output\Renogy_Shunt300LS_Portable.zip `
+            signed-output\verify_download.bat `
+            signed-output\SHA256SUMS.txt `
+            --clobber

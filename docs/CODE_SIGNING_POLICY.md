@@ -6,6 +6,12 @@ This policy defines how executable artifacts for RNG Shunt300 Live Simulator are
 
 Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
+## Current Status
+
+- Until SignPath onboarding is approved, releases may show Windows SmartScreen warnings.
+- After onboarding, release binaries are produced and signed through GitHub Actions.
+- Only signed artifacts are intended for public release downloads.
+
 ## Scope
 
 - Applies to Windows release artifacts published from this repository.
@@ -24,6 +30,27 @@ Only approvers may authorize code-signing release requests.
 - Build scripts and CI configuration are part of trusted source and must be code reviewed.
 - Version metadata must be present and consistent across signed artifacts.
 - Release artifacts must include SHA256 hashes in release notes.
+
+## CI Signing Workflow
+
+- Workflow: `.github/workflows/release-build-sign.yml`
+- Trigger: GitHub Release publish event (and optional manual dispatch)
+- Pipeline responsibilities:
+	- build executable and installer on GitHub-hosted Windows runners
+	- upload unsigned artifact bundle to GitHub Actions artifacts
+	- submit signing request to SignPath
+	- verify Authenticode signature status before release upload
+	- upload signed artifacts and SHA256SUMS to the GitHub release
+
+## Required GitHub Secrets
+
+- `SIGNPATH_API_TOKEN`
+- `SIGNPATH_ORGANIZATION_ID`
+- `SIGNPATH_PROJECT_SLUG`
+- `SIGNPATH_SIGNING_POLICY_SLUG`
+- Optional: `SIGNPATH_ARTIFACT_CONFIG_SLUG` (defaults to `default`)
+
+If required secrets are missing, the signing workflow fails and does not publish signed assets.
 
 ## Privacy Statement
 
