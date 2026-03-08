@@ -60,6 +60,14 @@ Use the provided scripts to keep SignPath secrets encrypted on the maintainer ho
 - `scripts/Sync-GitHubSigningSecrets.ps1` pushes vault entries to GitHub Actions secrets without printing values.
 - `scripts/Start-SignedRelease.ps1 -Tag vX.Y.Z` triggers the signed release workflow after secrets are configured.
 
+## One-Command Signing Automation
+
+- `scripts/Sign-CodeToday.ps1 -Mode Auto -Tag vX.Y.Z`
+	- uses SignPath workflow when required SignPath secrets exist
+	- otherwise performs local self-signed build and signing for immediate/internal use today
+
+Local self-signed mode is intended for internal validation and rapid iteration; public trust/signature reputation requires SignPath (or another publicly trusted CA-backed signing program).
+
 ## Privacy Statement
 
 This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
