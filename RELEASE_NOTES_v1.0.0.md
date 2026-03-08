@@ -48,10 +48,10 @@ All downloads should be hash-verified for integrity. Compare the SHA256 hash of 
 **SHA256 Hashes:**
 ```
 Renogy_Shunt300LS_Setup.exe
-01BF0686785AE189548971093F284FE9403A25F4D6E556E212FADB94DA45D501
+3983151A8AFA6D6A2113120FFD1CF0DFF15B0CD6A2BBD933F36C2485EEFD5940
 
 Renogy_Shunt300LS_Portable.zip
-46C1F2E5D2FD90B0460F295ECA85921597DF63C25DD74129A27286D83D0E2FC0
+6A86B98A5C9C4FDBC6CFF8FE8C5250CA37FF3131A7F2FBB4609E28736DF793B0
 ```
 
 **Verify on Windows (PowerShell):**
@@ -67,6 +67,61 @@ For Portable.zip:
 ```
 
 The output should match one of the hashes above. If it doesn't, the file may be corrupted or tampered with - do not run it.
+
+## Windows SmartScreen / Security Warning
+
+### Expected Behavior on First Run
+
+When you download and run the installer or portable executable, **Windows will likely show a security warning**:
+
+- **"Windows protected your PC"**
+- **"Microsoft Defender SmartScreen prevented an unrecognized app from starting"**
+- **Publisher: Unknown publisher**
+
+**This is normal and expected for new applications.**
+
+### Why This Happens
+
+This warning is triggered by two factors:
+
+1. **Mark of the Web (MOTW)**: Windows tags files downloaded from the internet with a "Zone Identifier" that marks them as potentially untrusted.
+2. **No Digital Signature**: v1.0.0 does not include a code-signing certificate. Digital signatures require purchasing a certificate from a Certificate Authority (CA), which will be considered for future releases once the application builds reputation and community trust.
+
+### Is This Safe?
+
+**Yes**, if you downloaded from the official release page: `https://github.com/rs-mini-rgb/RNG_Shunt300-ls/releases`
+
+- **Verify the SHA256 hash** (see above) to ensure file integrity
+- **Review the source code** on GitHub - this is open source
+- **Check the publisher**: rs-mini-rgb Community (on GitHub)
+
+### How to Run the Application
+
+**Option 1: Click "More info" → "Run anyway"** (Recommended for most users)
+
+1. When SmartScreen appears, click **"More info"**
+2. Click **"Run anyway"** at the bottom
+3. The application will launch normally
+
+**Option 2: Unblock the file before running** (Alternative method)
+
+1. Right-click the downloaded `.exe` or `.zip` file
+2. Select **Properties**
+3. At the bottom of the **General** tab, look for **"Security"** section
+4. Check the box: **"Unblock"** (or click **"Unblock"** button)
+5. Click **"Apply"** → **"OK"**
+6. Run the file normally
+
+**Note**: After you unblock and run the application once, Windows SmartScreen builds trust. Subsequent runs won't show the warning.
+
+### Future Plans
+
+We plan to add a digital code-signing certificate in future releases once:
+- The application gains community usage and reputation
+- Funds are available for purchasing a certificate from a trusted CA (Certificate Authority)
+- The project demonstrates long-term sustainability
+
+Until then, the SHA256 hash verification and open-source transparency provide security assurance.
 
 ## Getting Started
 
