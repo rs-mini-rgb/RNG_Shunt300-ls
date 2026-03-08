@@ -1,0 +1,2638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renogy Shunt300 HA Integration Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #101215 0%, #0d0f12 100%);
+            color: #e1e1e1;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0 20px;
+            border-bottom: 1px solid #2e343c;
+            margin-bottom: 18px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #2f2f2f;
+            background: #0f0f0f;
+            padding: 4px;
+        }
+
+        h1 {
+            color: #03a9f4;
+            font-size: 32px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .control-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .capacity-control {
+            display: inline-flex;
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 6px;
+            background: #161a1f;
+            border: 1px solid #303a46;
+            border-radius: 8px;
+            padding: 6px 8px;
+        }
+
+        .capacity-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .capacity-control input,
+        .capacity-control select {
+            width: 96px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #e1e1e1;
+            padding: 7px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .capacity-control select {
+            width: 78px;
+        }
+
+        .capacity-ah-group {
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .capacity-ah-group select {
+            width: 112px;
+        }
+
+        .capacity-hint {
+            font-size: 11px;
+            color: #8fa1b2;
+            padding-left: 2px;
+        }
+
+        .capacity-control button {
+            white-space: nowrap;
+            padding: 7px 12px;
+        }
+
+        .health-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
+            min-height: 34px;
+        }
+
+        .badge {
+            border: 1px solid #2f2f2f;
+            background: #171717;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: #ddd;
+            font-family: 'Courier New', monospace;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-width: 142px;
+        }
+
+        #badge-stale {
+            min-width: 180px;
+        }
+
+        #badge-reconnect-reason {
+            min-width: 190px;
+        }
+
+        #badge-reconnect-cooldown {
+            min-width: 170px;
+        }
+
+        .badge.good {
+            color: #4caf50;
+            border-color: #265e28;
+        }
+
+        .badge.warn {
+            color: #ff9800;
+            border-color: #6b4a1b;
+        }
+
+        .badge.error {
+            color: #f44336;
+            border-color: #6c2320;
+        }
+
+        .badge.info {
+            color: #03a9f4;
+            border-color: #1e4a5c;
+        }
+
+        .settings-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            background: #171b20;
+            border: 1px solid #2f3741;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .summary-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #b3b3b3;
+        }
+
+        .summary-chip.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .summary-chip.clickable:hover {
+            background: #2f2f2f;
+            border-color: #03a9f4;
+            transform: translateY(-1px);
+        }
+
+        .summary-chip .chip-label {
+            color: #888;
+        }
+
+        .summary-chip .chip-value {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #4caf50;
+        }
+
+        .status-dot.reconnecting {
+            background: #ff9800;
+        }
+
+        .status-dot.disconnected {
+            background: #7a8592;
+            animation: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #171b20;
+            border: 1px solid #2f3741;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 400;
+            color: #fff;
+        }
+
+        .summary-toggle {
+            margin-left: auto;
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .icon {
+            font-size: 24px;
+        }
+
+        .sensor-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sensor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #20262d;
+            border-radius: 8px;
+            border: 1px solid #2b3540;
+            transition: background 0.2s;
+        }
+
+        .sensor-item:hover {
+            background: #2a2a2a;
+        }
+
+        .sensor-item.diagnostic {
+            border-left: 3px solid #ff9800;
+        }
+
+        .sensor-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #b3b3b3;
+            font-size: 14px;
+        }
+
+        .sensor-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .sensor-value.unavailable {
+            color: #666;
+            font-style: italic;
+        }
+
+        .sensor-value.verified {
+            color: #4caf50;
+        }
+
+        .sensor-value.unverified {
+            color: #f44336;
+        }
+
+        .sensor-value.high {
+            color: #4caf50;
+        }
+
+        .sensor-value.medium {
+            color: #ff9800;
+        }
+
+        .sensor-value.low {
+            color: #f44336;
+        }
+
+        .sensor-value.charging {
+            color: #4caf50;
+        }
+
+        .sensor-value.discharging {
+            color: #ff9800;
+        }
+
+        .sensor-value.idle {
+            color: #03a9f4;
+        }
+
+        .sensor-value.unknown {
+            color: #666;
+        }
+
+        .attributes {
+            margin-top: 15px;
+            padding: 15px;
+            background: #1f1f1f;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .attributes-header {
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .attr-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 5px 0;
+        }
+
+        .attr-key {
+            color: #888;
+        }
+
+        .attr-value {
+            color: #bbb;
+            font-family: 'Courier New', monospace;
+            flex: 1;
+            text-align: right;
+        }
+
+        .hex-value {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-all;
+            white-space: normal;
+            text-align: right;
+            display: inline-block;
+        }
+
+        .diagnostic-badge {
+            background: #ff9800;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .log-panel {
+            background: #171b20;
+            border: 1px solid #2f3741;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .log-content {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            color: #4caf50;
+            margin-bottom: 5px;
+        }
+
+        .log-entry.error {
+            color: #f44336;
+        }
+
+        .log-entry.warning {
+            color: #ff9800;
+        }
+
+        .log-entry.verbose {
+            color: #9e9e9e;
+        }
+
+        .timestamp {
+            color: #666;
+        }
+
+        button {
+            background: #03a9f4;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 14px;
+            min-height: 34px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            transition: background 0.2s, transform 0.15s ease;
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid #03a9f4;
+            outline-offset: 1px;
+        }
+
+        button:hover {
+            background: #0288d1;
+            transform: translateY(-1px);
+        }
+
+        button.secondary {
+            background: #30343a;
+        }
+
+        button.secondary:hover {
+            background: #3f454d;
+        }
+
+        button.primary {
+            background: #039be5;
+        }
+
+        button.primary:hover {
+            background: #0288d1;
+        }
+
+        button.success {
+            background: #2e7d32;
+        }
+
+        button.success:hover {
+            background: #256628;
+        }
+
+        button.warning {
+            background: #ef6c00;
+        }
+
+        button.warning:hover {
+            background: #e65100;
+        }
+
+        button.danger {
+            background: #d32f2f;
+        }
+
+        button.danger:hover {
+            background: #b71c1c;
+        }
+
+        button.filter-off {
+            background: #1f2226;
+            color: #8a8a8a;
+            border: 1px solid #3a3a3a;
+        }
+
+        button.filter-off:hover {
+            background: #2a2f35;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .comparison-table th {
+            color: #03a9f4;
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .comparison-table .new-sensor {
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            background: #171b20;
+            border: 1px solid #2f3741;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            color: #8f8f8f;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.6px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            color: #f0f0f0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .meta-value.warn {
+            color: #ff9800;
+        }
+
+        .meta-value.good {
+            color: #4caf50;
+        }
+
+        /* Device List Panel */
+        .device-panel {
+            background: #171b20;
+            border: 1px solid #2f3741;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .device-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .device-panel-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-list {
+            display: grid;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .device-item {
+            display: grid;
+            grid-template-columns: 1fr 200px 80px auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 16px;
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .device-item:hover {
+            background: #2a2a2a;
+            border-color: #03a9f4;
+        }
+
+        .device-item.selected {
+            background: #1a2a3a;
+            border-color: #03a9f4;
+            border-width: 2px;
+        }
+
+        .device-name {
+            font-size: 14px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .device-address {
+            font-size: 12px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        .device-last-seen {
+            font-size: 11px;
+            color: #777;
+            font-style: italic;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .device-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 1280px) {
+            body {
+                padding: 18px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .badge {
+                min-width: 132px;
+                font-size: 11px;
+            }
+
+            #badge-stale {
+                min-width: 168px;
+            }
+
+            #badge-reconnect-reason {
+                min-width: 176px;
+            }
+
+            #badge-reconnect-cooldown {
+                min-width: 156px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .control-groups {
+                min-width: 100%;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 14px;
+            }
+
+            .meta-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+
+            .device-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+
+            h1 {
+                font-size: 22px;
+                line-height: 1.2;
+            }
+
+            .brand {
+                gap: 10px;
+            }
+
+            .control-row {
+                gap: 8px;
+            }
+
+            button {
+                min-height: 32px;
+                padding: 7px 11px;
+                font-size: 12px;
+            }
+
+            .capacity-control {
+                width: 100%;
+            }
+
+            .capacity-row {
+                width: 100%;
+            }
+
+            .health-badges {
+                gap: 6px;
+            }
+
+            .badge {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 0;
+            }
+
+            #badge-stale,
+            #badge-reconnect-reason,
+            #badge-reconnect-cooldown {
+                min-width: 0;
+            }
+
+            .settings-summary {
+                gap: 8px;
+                padding: 10px;
+            }
+
+            .summary-chip {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+
+            .card,
+            .log-panel,
+            .device-panel {
+                padding: 14px;
+            }
+
+            .sensor-item {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <img src="RSHST-B02P300.webp" alt="Shunt300 Logo" class="brand-logo" />
+                <h1>Renogy Shunt300 Integration Simulator</h1>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="connection-status">Live Monitoring Active</span>
+            </div>
+        </header>
+
+        <div class="control-bar">
+            <div class="control-groups">
+                <div class="control-row">
+                    <button class="secondary" onclick="discoverDevices()"
+                        title="Scan nearby BLE devices and show RTMShunt matches">Discover Devices</button>
+                    <button class="secondary" onclick="loadSavedDevices()"
+                        title="Load previously saved devices from cache/database">Load Saved Devices</button>
+                    <button class="secondary" onclick="clearDeviceCache()"
+                        title="Remove all saved devices from local cache/database">Clear Device Cache</button>
+                    <button class="primary" id="connect-button" onclick="connectDevice()"
+                        title="Connect to the currently selected target device">Connect</button>
+                    <button class="warning" id="disconnect-button" onclick="disconnectDevice()"
+                        title="Disconnect from the current BLE device">Disconnect</button>
+                    <button class="primary" id="force-reconnect-button" onclick="forceReconnect()"
+                        title="Force a fresh disconnect/reconnect cycle">Force Reconnect</button>
+                    <button class="danger" id="force-disconnect-button" onclick="forceDisconnect()"
+                        title="Immediately force disconnect and stop auto reconnect until Connect is pressed">Force
+                        Disconnect</button>
+                </div>
+                <div class="control-row">
+                    <button class="secondary" id="polling-toggle" onclick="togglePolling()"
+                        title="Pause or resume UI polling from /api/live">Pause Polling</button>
+                    <button class="secondary" onclick="resetCounters()"
+                        title="Reset counters and clear displayed live sensor values">Reset Counters</button>
+                    <div class="capacity-control" title="Set battery capacity used for SOC-to-kWh energy estimation">
+                        <div class="capacity-row">
+                            <select id="capacity-mode" onchange="updateCapacityMode()" title="Capacity entry mode">
+                                <option value="kwh">kWh</option>
+                                <option value="ah">Ah</option>
+                            </select>
+                            <input type="number" id="capacity-input" min="0" max="780" step="0.01" value="0.0"
+                                oninput="updateCapacityPreview()"
+                                title="Battery capacity in kWh (range: 0.008 to 780)" />
+                            <div class="capacity-ah-group" id="capacity-ah-group">
+                                <input type="number" id="capacity-ah-input" min="1" max="6500" step="1" value="100"
+                                    oninput="updateCapacityPreview()"
+                                    title="Battery capacity in Ah (range: 1 to 6500)" />
+                                <select id="capacity-voltage-preset" onchange="applyVoltagePreset()"
+                                    title="Quick nominal voltage preset">
+                                    <option value="12.8">12V LiFePO4 (12.8V)</option>
+                                    <option value="25.6">24V LiFePO4 (25.6V)</option>
+                                    <option value="38.4">36V LiFePO4 (38.4V)</option>
+                                    <option value="51.2">48V LiFePO4 (51.2V)</option>
+                                    <option value="custom">Custom Voltage</option>
+                                </select>
+                                <input type="number" id="capacity-voltage-input" min="8" max="120" step="0.1"
+                                    value="12.8" oninput="syncVoltagePresetFromInput(); updateCapacityPreview()"
+                                    title="Nominal voltage in V (range: 8 to 120)" />
+                            </div>
+                            <button class="secondary" onclick="setBatteryCapacity()"
+                                title="Apply the entered battery capacity">Set Capacity</button>
+                        </div>
+                        <div class="capacity-hint" id="capacity-preview">kWh mode (direct entry)</div>
+                    </div>
+                    <button class="secondary" id="record-toggle" onclick="toggleRecording()"
+                        title="Start or stop recording incoming sensor frames">Start Recording</button>
+                    <button class="secondary" id="export-recording" onclick="exportRecording()" disabled
+                        title="Export recorded frames to a JSON file">Export Recording</button>
+                    <button class="secondary" id="replay-recording" onclick="toggleReplay()" disabled
+                        title="Replay the last recorded session in UI">Replay Recording</button>
+                </div>
+                <div class="control-row">
+                    <button class="danger" onclick="purgeDatabase()"
+                        title="Delete all stored readings, recordings, and device cache">Purge Database</button>
+                    <button class="warning" onclick="restartApp()"
+                        title="Restart the simulator process (refresh page after restart)">Restart App</button>
+                </div>
+            </div>
+            <div class="health-badges">
+                <span class="badge" id="badge-packet-rate">Rate: 0.00/s</span>
+                <span class="badge" id="badge-reconnects">Reconnects: 0</span>
+                <span class="badge" id="badge-reconnect-reason">Reason: none</span>
+                <span class="badge" id="badge-reconnect-cooldown">Cooldown: ready</span>
+                <span class="badge" id="badge-stale">Stream: waiting</span>
+                <span class="badge" id="badge-recording">Recording: off</span>
+                <span class="badge info" id="badge-capacity-state">Capacity: not set</span>
+            </div>
+            <!-- Settings Summary Chips -->
+            <div class="settings-summary" id="settings-summary">
+                <div class="summary-chip" id="chip-capacity-mode">
+                    <span class="chip-label">Mode:</span>
+                    <span class="chip-value" id="chip-mode-value">kWh</span>
+                </div>
+                <div class="summary-chip" id="chip-voltage-preset">
+                    <span class="chip-label">Preset:</span>
+                    <span class="chip-value" id="chip-preset-value">12V LiFePO4</span>
+                </div>
+                <div class="summary-chip" id="chip-capacity-value">
+                    <span class="chip-label">Capacity:</span>
+                    <span class="chip-value" id="chip-capacity-text">0.0 kWh</span>
+                </div>
+                <div class="summary-chip clickable" id="chip-temp-unit" onclick="toggleTempUnit()"
+                    title="Click to toggle temperature unit">
+                    <span class="chip-label">Temp:</span>
+                    <span class="chip-value" id="chip-temp-unit-value">°C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device List Panel -->
+        <div class="device-panel" id="device-panel" style="display: none;">
+            <div class="device-panel-header">
+                <div class="device-panel-title">
+                    <span>📡</span>
+                    <span id="device-panel-title">Discovered Devices</span>
+                </div>
+                <button class="secondary" onclick="closeDevicePanel()">Close</button>
+            </div>
+            <div class="device-list" id="device-list">
+                <div class="device-empty">Click "Discover Devices" to scan for nearby BLE devices</div>
+            </div>
+            <!-- Manual MAC Entry -->
+            <div class="manual-device-entry"
+                style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #2f2f2f;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="text" id="manual-mac-input" placeholder="Enter MAC Address (e.g., 4C:E1:74:5C:94:8E)"
+                        style="flex: 1; background: #1a1a1a; border: 1px solid #333; color: #e1e1e1; padding: 8px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 13px;" />
+                    <input type="text" id="manual-device-name" placeholder="Device Name (optional)"
+                        style="flex: 0.5; background: #1a1a1a; border: 1px solid #333; color: #e1e1e1; padding: 8px; border-radius: 6px; font-size: 13px;" />
+                    <button class="primary" onclick="addDeviceManually()">Add Device</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="meta-grid">
+            <div class="meta-item">
+                <div class="meta-label">Connection Status</div>
+                <div class="meta-value" id="meta-connection-status">unknown</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Current Device</div>
+                <div class="meta-value" id="meta-current-device">Not Set</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Notifications Received</div>
+                <div class="meta-value" id="meta-notification-count">0</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Last Update Age</div>
+                <div class="meta-value" id="meta-age">unknown</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Last Update Time</div>
+                <div class="meta-value" id="meta-ts">unknown</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Battery Capacity</div>
+                <div class="meta-value" id="meta-capacity">0.0 kWh</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Energy Source</div>
+                <div class="meta-value" id="meta-energy-source">unknown</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Primary Sensors Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">📊</span>
+                    <h2>Primary Sensors</h2>
+                </div>
+                <div class="sensor-list">
+                    <div class="sensor-item">
+                        <span class="sensor-label">
+                            <span>👁️</span>
+                            Status
+                        </span>
+                        <span class="sensor-value unknown" id="status">unknown</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">
+                            <span>⚡</span>
+                            Current
+                        </span>
+                        <span class="sensor-value unavailable" id="current">unavailable</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">
+                            <span>⚡</span>
+                            Voltage
+                        </span>
+                        <span class="sensor-value unavailable" id="voltage">unavailable</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">
+                            <span>💡</span>
+                            Power
+                        </span>
+                        <span class="sensor-value unavailable" id="power">unavailable</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">
+                            <span>🔋</span>
+                            State of Charge
+                        </span>
+                        <span class="sensor-value unavailable" id="soc">unavailable</span>
+                    </div>
+                    <div class="sensor-item">
+                        <span class="sensor-label">
+                            <span>⚡</span>
+                            Energy
+                        </span>
+                        <span class="sensor-value unavailable" id="energy">unavailable</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diagnostic Sensors Card (NEW) -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">🔧</span>
+                    <h2>Diagnostic Sensors</h2>
+                    <span class="diagnostic-badge">New</span>
+                </div>
+                <div class="sensor-list">
+                    <div class="sensor-item diagnostic">
+                        <span class="sensor-label">
+                            <span>📊</span>
+                            Decode Confidence
+                        </span>
+                        <span class="sensor-value unknown" id="confidence">UNKNOWN</span>
+                    </div>
+                    <div class="sensor-item diagnostic">
+                        <span class="sensor-label">
+                            <span>✓</span>
+                            Reading Verified
+                        </span>
+                        <span class="sensor-value unverified" id="verified">false</span>
+                    </div>
+                    <div class="sensor-item diagnostic">
+                        <span class="sensor-label">
+                            <span>📦</span>
+                            Raw Payload
+                        </span>
+                        <span class="sensor-value hex-value unavailable" id="payload">N/A</span>
+                    </div>
+                </div>
+                <div class="attributes">
+                    <div class="attributes-header">Shared State Attributes (All Sensors)</div>
+                    <div class="attr-item">
+                        <span class="attr-key">decode_confidence:</span>
+                        <span class="attr-value" id="attr-confidence">UNKNOWN</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-key">reading_verified:</span>
+                        <span class="attr-value" id="attr-verified">false</span>
+                    </div>
+                    <div class="attr-item">
+                        <span class="attr-key">raw_payload:</span>
+                        <span class="attr-value hex-value" id="attr-payload">N/A</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Extended Sensors Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="icon">🧩</span>
+                    <h2>Extended Sensors (Notify Mode)</h2>
+                </div>
+                <div class="sensor-list">
+                    <div class="sensor-item"><span class="sensor-label">Starter Voltage</span><span class="sensor-value"
+                            id="ext-starter-voltage">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Temperature 1</span><span class="sensor-value"
+                            id="ext-temp-1">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Temperature 2</span><span class="sensor-value"
+                            id="ext-temp-2">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Temperature 3</span><span class="sensor-value"
+                            id="ext-temp-3">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Historical 1</span><span class="sensor-value"
+                            id="ext-hist-1">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Historical 2</span><span class="sensor-value"
+                            id="ext-hist-2">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Historical 3</span><span class="sensor-value"
+                            id="ext-hist-3">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Historical 4</span><span class="sensor-value"
+                            id="ext-hist-4">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Historical 5</span><span class="sensor-value"
+                            id="ext-hist-5">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Historical 6</span><span class="sensor-value"
+                            id="ext-hist-6">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Additional Value</span><span
+                            class="sensor-value" id="ext-additional">unavailable</span></div>
+                    <div class="sensor-item"><span class="sensor-label">Sequence</span><span class="sensor-value"
+                            id="ext-sequence">unavailable</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">📋</span>
+                <h2>Integration Changes Summary</h2>
+                <button class="secondary summary-toggle" id="summary-toggle" onclick="toggleIntegrationSummary()"
+                    title="Show or hide integration summary table">Show Summary</button>
+            </div>
+            <div id="integration-summary-content" style="display: none;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Sensor</th>
+                            <th>Status</th>
+                            <th>Value Extraction</th>
+                            <th>Verification Gate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Voltage</td>
+                            <td>✅ Enhanced</td>
+                            <td>_shunt_voltage_value()</td>
+                            <td>✅ Yes (verified gate)</td>
+                        </tr>
+                        <tr>
+                            <td>Current</td>
+                            <td>✅ Enhanced</td>
+                            <td>_shunt_current_value()</td>
+                            <td>✅ Yes (verified gate)</td>
+                        </tr>
+                        <tr>
+                            <td>Power</td>
+                            <td>✅ Enhanced</td>
+                            <td>_shunt_power_value()</td>
+                            <td>✅ Yes (verified gate)</td>
+                        </tr>
+                        <tr>
+                            <td>State of Charge</td>
+                            <td>✅ Enhanced</td>
+                            <td>_shunt_soc_value()</td>
+                            <td>✅ Yes (verified gate)</td>
+                        </tr>
+                        <tr>
+                            <td>Energy</td>
+                            <td>✅ Enhanced</td>
+                            <td>_shunt_energy_value()</td>
+                            <td>✅ Yes (verified gate)</td>
+                        </tr>
+                        <tr>
+                            <td>Status</td>
+                            <td>✅ Enhanced</td>
+                            <td>_shunt_status_value()</td>
+                            <td>✅ Yes (verified gate)</td>
+                        </tr>
+                        <tr class="new-sensor">
+                            <td>Decode Confidence</td>
+                            <td>🆕 New</td>
+                            <td>_shunt_confidence_value()</td>
+                            <td>N/A (diagnostic)</td>
+                        </tr>
+                        <tr class="new-sensor">
+                            <td>Reading Verified</td>
+                            <td>🆕 New</td>
+                            <td>_shunt_verified_value()</td>
+                            <td>N/A (diagnostic)</td>
+                        </tr>
+                        <tr class="new-sensor">
+                            <td>Raw Payload</td>
+                            <td>🆕 New</td>
+                            <td>_shunt_payload_value()</td>
+                            <td>N/A (diagnostic)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Live Log Panel -->
+        <div class="log-panel">
+            <div class="log-header">
+                <h2>📄 Live Monitor Log</h2>
+                <div class="log-controls">
+                    <button class="filter-off" id="log-filter-info" onclick="toggleLogLevel('info')">Info OFF</button>
+                    <button class="filter-off" id="log-filter-error" onclick="toggleLogLevel('error')">Error
+                        OFF</button>
+                    <button class="filter-off" id="log-filter-verbose" onclick="toggleLogLevel('verbose')">Verbose
+                        OFF</button>
+                    <button onclick="clearLog()">Clear</button>
+                </div>
+            </div>
+            <div class="log-content" id="log-content">
+                <div class="log-entry" data-level="info"><span class="timestamp">[--:--:--]</span> Waiting for live
+                    capture data...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let updateCount = 0;
+        let lastSeenTs = null;
+        let pollTimer = null;
+        let pollingPaused = false;
+        let isRecording = false;
+        let recordedFrames = [];
+        let recordingStartedAt = null;
+        let lastLiveData = null;
+        let isReplaying = false;
+        let replayTimer = null;
+        let replayIndex = 0;
+        let selectedDevice = null;
+        let pollInFlight = false;
+        let consecutivePollErrors = 0;
+        const MAX_RECORDED_FRAMES = 20000;
+        const UI_PREFS_KEY = 'shunt300_ui_prefs_v1';
+        const CAPACITY_MIN_KWH = 0.008;
+        const CAPACITY_MAX_KWH = 780;
+        const CAPACITY_MIN_AH = 1;
+        const CAPACITY_MAX_AH = 6500;
+        const CAPACITY_MIN_V = 8;
+        const CAPACITY_MAX_V = 120;
+        const logFilters = {
+            info: false,
+            error: false,
+            verbose: false,
+        };
+
+        function loadUiPreferences() {
+            const defaults = {
+                pollingPaused: false,
+                summaryCollapsed: true,
+                capacityMode: 'kwh',
+                nominalVoltage: 12.8,
+                voltagePreset: '12.8',
+                logFilters: {
+                    info: false,
+                    error: false,
+                    verbose: false,
+                }
+            };
+
+            try {
+                const raw = localStorage.getItem(UI_PREFS_KEY);
+                if (!raw) {
+                    return defaults;
+                }
+
+                const parsed = JSON.parse(raw);
+                return {
+                    pollingPaused: typeof parsed.pollingPaused === 'boolean' ? parsed.pollingPaused : defaults.pollingPaused,
+                    summaryCollapsed: typeof parsed.summaryCollapsed === 'boolean' ? parsed.summaryCollapsed : defaults.summaryCollapsed,
+                    capacityMode: parsed.capacityMode === 'ah' ? 'ah' : defaults.capacityMode,
+                    nominalVoltage: Number.isFinite(Number(parsed.nominalVoltage)) ? Number(parsed.nominalVoltage) : defaults.nominalVoltage,
+                    voltagePreset: typeof parsed.voltagePreset === 'string' ? parsed.voltagePreset : defaults.voltagePreset,
+                    logFilters: {
+                        info: typeof parsed?.logFilters?.info === 'boolean' ? parsed.logFilters.info : defaults.logFilters.info,
+                        error: typeof parsed?.logFilters?.error === 'boolean' ? parsed.logFilters.error : defaults.logFilters.error,
+                        verbose: typeof parsed?.logFilters?.verbose === 'boolean' ? parsed.logFilters.verbose : defaults.logFilters.verbose,
+                    }
+                };
+            } catch {
+                return defaults;
+            }
+        }
+
+        function saveUiPreferences() {
+            try {
+                const content = document.getElementById('integration-summary-content');
+                const summaryCollapsed = !content || content.style.display === 'none';
+                localStorage.setItem(UI_PREFS_KEY, JSON.stringify({
+                    pollingPaused,
+                    summaryCollapsed,
+                    capacityMode: document.getElementById('capacity-mode')?.value || 'kwh',
+                    nominalVoltage: Number(document.getElementById('capacity-voltage-input')?.value || 12.8),
+                    voltagePreset: document.getElementById('capacity-voltage-preset')?.value || '12.8',
+                    logFilters,
+                }));
+            } catch {
+                // Ignore storage write errors
+            }
+        }
+
+        function applyUiPreferences() {
+            const prefs = loadUiPreferences();
+            pollingPaused = prefs.pollingPaused;
+            logFilters.info = prefs.logFilters.info;
+            logFilters.error = prefs.logFilters.error;
+            logFilters.verbose = prefs.logFilters.verbose;
+
+            const summaryContent = document.getElementById('integration-summary-content');
+            const summaryButton = document.getElementById('summary-toggle');
+            if (summaryContent && summaryButton) {
+                summaryContent.style.display = prefs.summaryCollapsed ? 'none' : 'block';
+                summaryButton.textContent = prefs.summaryCollapsed ? 'Show Summary' : 'Hide Summary';
+            }
+
+            const pollingButton = document.getElementById('polling-toggle');
+            if (pollingButton) {
+                pollingButton.textContent = pollingPaused ? 'Resume Polling' : 'Pause Polling';
+            }
+
+            const modeEl = document.getElementById('capacity-mode');
+            const voltageEl = document.getElementById('capacity-voltage-input');
+            const presetEl = document.getElementById('capacity-voltage-preset');
+            if (modeEl) {
+                modeEl.value = prefs.capacityMode;
+            }
+            if (voltageEl && Number.isFinite(prefs.nominalVoltage)) {
+                voltageEl.value = Number(prefs.nominalVoltage).toFixed(1);
+            }
+            if (presetEl) {
+                const allowed = ['12.8', '25.6', '38.4', '51.2', 'custom'];
+                presetEl.value = allowed.includes(prefs.voltagePreset) ? prefs.voltagePreset : 'custom';
+            }
+            syncVoltagePresetFromInput();
+            updateCapacityMode();
+        }
+
+        function applyVoltagePreset() {
+            const presetEl = document.getElementById('capacity-voltage-preset');
+            const voltageInput = document.getElementById('capacity-voltage-input');
+            if (!presetEl || !voltageInput) {
+                return;
+            }
+
+            if (presetEl.value !== 'custom') {
+                const presetVoltage = Number(presetEl.value);
+                if (Number.isFinite(presetVoltage)) {
+                    voltageInput.value = presetVoltage.toFixed(1);
+                }
+            }
+
+            updateCapacityPreview();
+            updateSettingsSummaryChips();
+            saveUiPreferences();
+        }
+
+        function syncVoltagePresetFromInput() {
+            const presetEl = document.getElementById('capacity-voltage-preset');
+            const voltageInput = document.getElementById('capacity-voltage-input');
+            if (!presetEl || !voltageInput) {
+                return;
+            }
+
+            const voltage = Number(voltageInput.value);
+            if (!Number.isFinite(voltage)) {
+                presetEl.value = 'custom';
+                return;
+            }
+
+            const presets = ['12.8', '25.6', '38.4', '51.2'];
+            const matched = presets.find((preset) => Math.abs(voltage - Number(preset)) < 0.05);
+            presetEl.value = matched || 'custom';
+        }
+
+        function updateCapacityPreview() {
+            const previewEl = document.getElementById('capacity-preview');
+            const modeEl = document.getElementById('capacity-mode');
+            const kwhInput = document.getElementById('capacity-input');
+            const ahInput = document.getElementById('capacity-ah-input');
+            const voltageInput = document.getElementById('capacity-voltage-input');
+            if (!previewEl || !modeEl) {
+                return;
+            }
+
+            if (modeEl.value === 'ah') {
+                const ah = Number(ahInput?.value);
+                const volts = Number(voltageInput?.value);
+                if (!Number.isFinite(ah) || !Number.isFinite(volts) || ah <= 0 || volts <= 0) {
+                    previewEl.textContent = 'Ah mode: enter Ah and nominal voltage';
+                    return;
+                }
+                const kwh = (ah * volts) / 1000;
+                previewEl.textContent = `${ah.toFixed(0)}Ah × ${volts.toFixed(1)}V = ${kwh.toFixed(3)}kWh`;
+                return;
+            }
+
+            const kwh = Number(kwhInput?.value);
+            if (!Number.isFinite(kwh) || kwh <= 0) {
+                previewEl.textContent = 'kWh mode (direct entry)';
+                return;
+            }
+            previewEl.textContent = `kWh mode: ${kwh.toFixed(3)}kWh`;
+            updateSettingsSummaryChips();
+        }
+
+        function updateCapacityMode() {
+            const modeEl = document.getElementById('capacity-mode');
+            const kwhInput = document.getElementById('capacity-input');
+            const ahGroup = document.getElementById('capacity-ah-group');
+            if (!modeEl || !kwhInput || !ahGroup) {
+                return;
+            }
+
+            const isAhMode = modeEl.value === 'ah';
+            ahGroup.style.display = isAhMode ? 'inline-flex' : 'none';
+            kwhInput.style.display = isAhMode ? 'none' : 'inline-block';
+            syncVoltagePresetFromInput();
+            updateCapacityPreview();
+            updateSettingsSummaryChips();
+            saveUiPreferences();
+        }
+
+        function resolveLogLevel(type) {
+            if (type === 'error' || type === 'warning') {
+                return 'error';
+            }
+            if (type === 'verbose') {
+                return 'verbose';
+            }
+            return 'info';
+        }
+
+        function updateLogFilterButtons() {
+            Object.keys(logFilters).forEach((level) => {
+                const button = document.getElementById(`log-filter-${level}`);
+                if (!button) {
+                    return;
+                }
+                const enabled = logFilters[level];
+                button.textContent = `${level.charAt(0).toUpperCase() + level.slice(1)} ${enabled ? 'ON' : 'OFF'}`;
+                button.className = enabled ? 'secondary' : 'filter-off';
+            });
+        }
+
+        function applyLogFilters() {
+            const entries = document.querySelectorAll('#log-content .log-entry');
+            entries.forEach((entry) => {
+                const level = entry.dataset.level || 'info';
+                entry.style.display = logFilters[level] ? '' : 'none';
+            });
+        }
+
+        function toggleLogLevel(level) {
+            if (!(level in logFilters)) {
+                return;
+            }
+            logFilters[level] = !logFilters[level];
+            updateLogFilterButtons();
+            applyLogFilters();
+            saveUiPreferences();
+        }
+
+        function updateRecordingUI() {
+            const recordBtn = document.getElementById('record-toggle');
+            const exportBtn = document.getElementById('export-recording');
+            const replayBtn = document.getElementById('replay-recording');
+            const recordingBadge = document.getElementById('badge-recording');
+
+            if (recordBtn) {
+                recordBtn.textContent = isRecording ? 'Stop Recording' : 'Start Recording';
+                recordBtn.className = isRecording ? 'warning' : 'secondary';
+            }
+            if (exportBtn) {
+                exportBtn.disabled = recordedFrames.length === 0;
+            }
+            if (replayBtn) {
+                replayBtn.disabled = recordedFrames.length === 0;
+                replayBtn.textContent = isReplaying ? 'Stop Replay' : 'Replay Recording';
+            }
+            if (recordingBadge) {
+                if (isRecording) {
+                    recordingBadge.textContent = `Recording: on (${recordedFrames.length})`;
+                    recordingBadge.className = 'badge warn';
+                } else if (recordedFrames.length > 0) {
+                    recordingBadge.textContent = `Recording: ready (${recordedFrames.length})`;
+                    recordingBadge.className = 'badge good';
+                } else {
+                    recordingBadge.textContent = 'Recording: off';
+                    recordingBadge.className = 'badge';
+                }
+            }
+        }
+
+        function captureFrame(data) {
+            if (!isRecording || !data) {
+                return;
+            }
+
+            const frame = {
+                captured_at: new Date().toISOString(),
+                payload: JSON.parse(JSON.stringify(data))
+            };
+            recordedFrames.push(frame);
+            if (recordedFrames.length > MAX_RECORDED_FRAMES) {
+                recordedFrames.shift();
+            }
+            updateRecordingUI();
+        }
+
+        function toggleRecording() {
+            if (!isRecording) {
+                isRecording = true;
+                recordedFrames = [];
+                recordingStartedAt = new Date().toISOString();
+                addLog('Recording started');
+            } else {
+                isRecording = false;
+                addLog(`Recording stopped (${recordedFrames.length} frames captured)`);
+            }
+            updateRecordingUI();
+        }
+
+        function exportRecording() {
+            if (recordedFrames.length === 0) {
+                addLog('No recording data to export', 'warning');
+                return;
+            }
+
+            const payload = {
+                format: 'shunt300-recording-v1',
+                recorded_at: recordingStartedAt || new Date().toISOString(),
+                exported_at: new Date().toISOString(),
+                sample_count: recordedFrames.length,
+                poll_interval_ms: 2000,
+                frames: recordedFrames,
+            };
+
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `shunt300_recording_${timestamp}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            addLog(`Recording exported (${recordedFrames.length} frames)`);
+        }
+
+        function stopReplay(resetStatus = true) {
+            if (replayTimer) {
+                clearInterval(replayTimer);
+                replayTimer = null;
+            }
+            isReplaying = false;
+            replayIndex = 0;
+            if (resetStatus) {
+                const statusEl = document.getElementById('connection-status');
+                if (statusEl && !pollingPaused) {
+                    statusEl.textContent = 'Live HTTP polling active';
+                }
+            }
+            updateRecordingUI();
+        }
+
+        function toggleReplay() {
+            if (isReplaying) {
+                stopReplay(false);
+                addLog('Replay stopped');
+                return;
+            }
+
+            if (recordedFrames.length === 0) {
+                addLog('No recording available to replay', 'warning');
+                return;
+            }
+
+            if (isRecording) {
+                isRecording = false;
+                addLog('Recording stopped before replay');
+            }
+
+            pollingPaused = true;
+            const pollingButton = document.getElementById('polling-toggle');
+            if (pollingButton) {
+                pollingButton.textContent = 'Resume Polling';
+            }
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+
+            isReplaying = true;
+            replayIndex = 0;
+            updateRecordingUI();
+            addLog(`Replay started (${recordedFrames.length} frames)`);
+
+            const statusEl = document.getElementById('connection-status');
+            if (statusEl) {
+                statusEl.textContent = 'Replay mode active';
+            }
+
+            replayTimer = setInterval(() => {
+                if (!isReplaying) {
+                    return;
+                }
+                if (replayIndex >= recordedFrames.length) {
+                    stopReplay(false);
+                    addLog('Replay completed');
+                    return;
+                }
+
+                const frame = recordedFrames[replayIndex];
+                updateSensors(frame.payload, { silent: true });
+                replayIndex += 1;
+            }, 500);
+        }
+
+        function updateCapacityStateBadge(data) {
+            const badge = document.getElementById('badge-capacity-state');
+            if (!badge) return;
+
+            const configuredCapacity = Number(data.configured_capacity_kwh);
+            if (Number.isFinite(configuredCapacity) && configuredCapacity > 0) {
+                badge.textContent = `Capacity: ${configuredCapacity.toFixed(2)} kWh`;
+                badge.className = 'badge good';
+            } else {
+                badge.textContent = 'Capacity: not set';
+                badge.className = 'badge info';
+            }
+        }
+
+        function updateSettingsSummaryChips() {
+            const modeEl = document.getElementById('capacity-mode');
+            const presetEl = document.getElementById('capacity-voltage-preset');
+            const capacityInputEl = document.getElementById('capacity-input');
+            const ahInputEl = document.getElementById('capacity-ah-input');
+            const voltageInputEl = document.getElementById('capacity-voltage-input');
+
+            const chipModeValue = document.getElementById('chip-mode-value');
+            const chipPresetValue = document.getElementById('chip-preset-value');
+            const chipCapacityText = document.getElementById('chip-capacity-text');
+            const chipTempUnitValue = document.getElementById('chip-temp-unit-value');
+
+            if (chipModeValue && modeEl) {
+                const mode = modeEl.value;
+                chipModeValue.textContent = mode === 'ah' ? 'Ah+V' : 'kWh';
+            }
+
+            if (chipPresetValue && presetEl) {
+                const presetMap = {
+                    '12.8': '12V LiFePO4',
+                    '25.6': '24V LiFePO4',
+                    '38.4': '36V LiFePO4',
+                    '51.2': '48V LiFePO4',
+                    'custom': 'Custom'
+                };
+                chipPresetValue.textContent = presetMap[presetEl.value] || 'Custom';
+            }
+
+            if (chipCapacityText && capacityInputEl && ahInputEl && voltageInputEl && modeEl) {
+                const mode = modeEl.value;
+                if (mode === 'ah') {
+                    const ah = Number(ahInputEl.value);
+                    const volts = Number(voltageInputEl.value);
+                    if (Number.isFinite(ah) && Number.isFinite(volts) && ah > 0 && volts > 0) {
+                        const kwh = (ah * volts) / 1000;
+                        chipCapacityText.textContent = `${ah.toFixed(0)}Ah @ ${volts.toFixed(1)}V (${kwh.toFixed(3)}kWh)`;
+                    } else {
+                        chipCapacityText.textContent = '0.0 kWh';
+                    }
+                } else {
+                    const kwh = Number(capacityInputEl.value);
+                    chipCapacityText.textContent = Number.isFinite(kwh) && kwh > 0 ? `${kwh.toFixed(3)} kWh` : '0.0 kWh';
+                }
+            }
+
+            // Update temperature unit chip
+            if (chipTempUnitValue) {
+                const tempUnit = localStorage.getItem('tempUnit') || 'C';
+                chipTempUnitValue.textContent = tempUnit === 'F' ? '°F' : '°C';
+            }
+        }
+
+        function toggleTempUnit() {
+            const currentUnit = localStorage.getItem('tempUnit') || 'C';
+            const newUnit = currentUnit === 'C' ? 'F' : 'C';
+            localStorage.setItem('tempUnit', newUnit);
+
+            // Update the chip display
+            updateSettingsSummaryChips();
+
+            // Force refresh of sensor data to apply conversion
+            if (lastLiveData) {
+                updateSensors(lastLiveData);
+            }
+        }
+
+        function updateHealthBadges(data) {
+            const packetRateEl = document.getElementById('badge-packet-rate');
+            const reconnectsEl = document.getElementById('badge-reconnects');
+            const reconnectReasonEl = document.getElementById('badge-reconnect-reason');
+            const reconnectCooldownEl = document.getElementById('badge-reconnect-cooldown');
+            const staleEl = document.getElementById('badge-stale');
+
+            const rate = Number(data.packet_rate_per_sec || 0);
+            const reconnects = Number(data.reconnect_count || 0);
+            const ageSec = Number(data.last_update_age_sec || 99999);
+            const staleAfter = Number(data.stale_after_seconds || 10);
+            const cooldownRemaining = Number(data.reconnect_cooldown_remaining_sec || 0);
+            const reconnectReason = (data.last_reconnect_reason || 'none').toString();
+            const connectedFor = data.connected_for_text || 'n/a';
+            const normalizedReason = reconnectReason.replace(/_/g, ' ');
+
+            if (packetRateEl) {
+                packetRateEl.textContent = `Rate: ${rate.toFixed(2)}/s`;
+                packetRateEl.className = `badge ${rate > 0.1 ? 'good' : 'warn'}`;
+            }
+
+            if (reconnectsEl) {
+                reconnectsEl.textContent = `Reconnects: ${reconnects}`;
+                reconnectsEl.className = `badge ${reconnects === 0 ? 'good' : 'warn'}`;
+            }
+
+            if (reconnectReasonEl) {
+                reconnectReasonEl.textContent = `Reason: ${normalizedReason}`;
+                reconnectReasonEl.className = `badge ${reconnectReason === 'none' ? 'good' : 'warn'}`;
+            }
+
+            if (reconnectCooldownEl) {
+                reconnectCooldownEl.textContent = cooldownRemaining > 0
+                    ? `Cooldown: ${cooldownRemaining}s`
+                    : `Cooldown: ready`;
+                reconnectCooldownEl.className = `badge ${cooldownRemaining > 0 ? 'warn' : 'good'}`;
+            }
+
+            if (staleEl) {
+                if (!data.timestamp) {
+                    staleEl.textContent = 'Stream: waiting';
+                    staleEl.className = 'badge warn';
+                } else if (ageSec <= staleAfter) {
+                    staleEl.textContent = `Stream: live (${Math.round(ageSec)}s, up ${connectedFor})`;
+                    staleEl.className = 'badge good';
+                } else {
+                    staleEl.textContent = `Stream: stale (${Math.round(ageSec)}s, up ${connectedFor})`;
+                    staleEl.className = 'badge error';
+                }
+            }
+        }
+
+        async function runAction(action) {
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload.message || 'Action failed');
+                }
+                addLog(`Action succeeded: ${payload.message}`);
+            } catch (error) {
+                addLog(`Action failed: ${error.message}`, 'warning');
+            }
+        }
+
+        function connectDevice() {
+            runAction('connect');
+        }
+
+        function disconnectDevice() {
+            runAction('disconnect');
+        }
+
+        function forceReconnect() {
+            runAction('reconnect');
+        }
+
+        function forceDisconnect() {
+            runAction('force_disconnect');
+        }
+
+        function updateConnectionActionButtons(data) {
+            const connectBtn = document.getElementById('connect-button');
+            const disconnectBtn = document.getElementById('disconnect-button');
+            const reconnectBtn = document.getElementById('force-reconnect-button');
+            const forceDisconnectBtn = document.getElementById('force-disconnect-button');
+
+            const connStatus = (data?.connection_status || '').toString().toLowerCase();
+            const isConnected = data?.connected === true || connStatus === 'connected';
+            const isReconnecting = connStatus.includes('reconnecting');
+
+            if (connectBtn) {
+                connectBtn.className = isConnected ? 'success' : 'primary';
+                if (isConnected) {
+                    connectBtn.textContent = 'Connected';
+                } else if (isReconnecting) {
+                    connectBtn.textContent = 'Reconnecting...';
+                } else {
+                    connectBtn.textContent = 'Connect';
+                }
+            }
+
+            if (disconnectBtn) {
+                disconnectBtn.className = 'warning';
+                disconnectBtn.disabled = !isConnected && !isReconnecting;
+            }
+
+            if (reconnectBtn) {
+                reconnectBtn.className = 'primary';
+                reconnectBtn.disabled = !isConnected && !isReconnecting;
+            }
+
+            if (forceDisconnectBtn) {
+                forceDisconnectBtn.className = 'danger';
+                forceDisconnectBtn.disabled = !isConnected && !isReconnecting;
+            }
+        }
+
+        function updateConnectionStatusIndicator(connStatus) {
+            const statusEl = document.getElementById('connection-status');
+            const statusDotEl = document.querySelector('.status-indicator .status-dot');
+            const normalized = (connStatus || '').toString().toLowerCase();
+            const isConnected = normalized === 'connected';
+            const isReconnecting = normalized.includes('reconnecting') || normalized === 'connecting';
+
+            if (statusEl) {
+                statusEl.textContent = `Live HTTP polling active${connStatus ? ` (${connStatus})` : ''}`;
+            }
+
+            if (statusDotEl) {
+                statusDotEl.classList.remove('connected', 'reconnecting', 'disconnected');
+                if (isConnected) {
+                    statusDotEl.classList.add('connected');
+                } else if (isReconnecting) {
+                    statusDotEl.classList.add('reconnecting');
+                } else {
+                    statusDotEl.classList.add('disconnected');
+                }
+            }
+        }
+
+        function resetCounters() {
+            runAction('reset_counters');
+        }
+
+        async function setBatteryCapacity() {
+            const modeEl = document.getElementById('capacity-mode');
+            const capacityInput = document.getElementById('capacity-input');
+            const ahInput = document.getElementById('capacity-ah-input');
+            const voltageInput = document.getElementById('capacity-voltage-input');
+            const mode = modeEl?.value || 'kwh';
+
+            let value = null;
+            if (mode === 'ah') {
+                const ah = Number(ahInput?.value);
+                const volts = Number(voltageInput?.value);
+                if (!Number.isFinite(ah) || ah < CAPACITY_MIN_AH || ah > CAPACITY_MAX_AH) {
+                    addLog(`Please enter Ah between ${CAPACITY_MIN_AH} and ${CAPACITY_MAX_AH}`, 'warning');
+                    return;
+                }
+                if (!Number.isFinite(volts) || volts < CAPACITY_MIN_V || volts > CAPACITY_MAX_V) {
+                    addLog(`Please enter nominal voltage between ${CAPACITY_MIN_V} and ${CAPACITY_MAX_V}V`, 'warning');
+                    return;
+                }
+
+                value = (ah * volts) / 1000;
+                if (value < CAPACITY_MIN_KWH || value > CAPACITY_MAX_KWH) {
+                    addLog(`Computed capacity (${value.toFixed(3)}kWh) is outside ${CAPACITY_MIN_KWH}-${CAPACITY_MAX_KWH}kWh`, 'warning');
+                    return;
+                }
+                addLog(`Setting battery capacity to ${value.toFixed(3)} kWh (${ah.toFixed(0)}Ah @ ${volts.toFixed(1)}V)...`, 'info');
+            } else {
+                const rawValue = capacityInput ? capacityInput.value : '';
+                value = parseFloat(rawValue);
+
+                if (!Number.isFinite(value) || value < CAPACITY_MIN_KWH || value > CAPACITY_MAX_KWH) {
+                    addLog(`Please enter a valid capacity between ${CAPACITY_MIN_KWH} and ${CAPACITY_MAX_KWH} kWh`, 'warning');
+                    return;
+                }
+                addLog(`Setting battery capacity to ${value} kWh...`, 'info');
+            }
+
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'set_capacity', capacity_kwh: value })
+                });
+                const payload = await response.json();
+
+                if (payload.ok) {
+                    addLog(`✅ ${payload.message}`, 'info');
+                    if (capacityInput && Number.isFinite(payload.capacity_kwh)) {
+                        capacityInput.value = Number(payload.capacity_kwh).toFixed(2);
+                    }
+                    updateCapacityPreview();
+                    updateSettingsSummaryChips();
+                } else {
+                    addLog(`❌ ${payload.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Failed to set capacity: ${error.message}`, 'warning');
+            }
+        }
+
+        async function discoverDevices() {
+            addLog('Discovering BLE devices...', 'info');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'discover_devices' })
+                });
+                const payload = await response.json();
+
+                if (payload.ok && payload.discovery) {
+                    const devices = payload.discovery.devices || [];
+                    addLog(`✅ Found ${devices.length} BLE device(s)`, 'info');
+
+                    // Show device panel and populate list
+                    const panel = document.getElementById('device-panel');
+                    const listEl = document.getElementById('device-list');
+                    const titleEl = document.getElementById('device-panel-title');
+
+                    if (panel && listEl && titleEl) {
+                        panel.style.display = 'block';
+                        titleEl.textContent = `Discovered Devices (${devices.length})`;
+
+                        if (devices.length === 0) {
+                            listEl.innerHTML = '<div class=\"device-empty\">No RTMShunt devices found</div>';
+                        } else {
+                            listEl.innerHTML = devices.map((device, idx) => {
+                                const lastSeen = device.last_seen ? new Date(device.last_seen).toLocaleString() : 'Just now';
+                                return `
+                                    <div class=\"device-item\" onclick=\"selectDevice(${idx})\" id=\"device-${idx}\">
+                                        <div>
+                                            <div class=\"device-name\">${device.name}</div>
+                                            <div class=\"device-address\">${device.address}</div>
+                                            <div class=\"device-last-seen\">Last seen: ${lastSeen}</div>
+                                        </div>
+                                        <div class=\"device-actions\">
+                                            <button class=\"primary\" onclick=\"setDeviceTarget('${device.address}', '${device.name}'); event.stopPropagation();\">Set Target</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                        }
+                    }
+
+                    // Store devices in a global variable for selection
+                    window.discoveredDevices = devices;
+                } else {
+                    addLog(`❌ Discovery failed: ${payload.message || 'Unknown error'}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Discovery failed: ${error.message}`, 'warning');
+            }
+        }
+
+        function selectDevice(index) {
+            if (!window.discoveredDevices || index >= window.discoveredDevices.length) {
+                return;
+            }
+
+            selectedDevice = window.discoveredDevices[index];
+            addLog(`Selected device: ${selectedDevice.name} (${selectedDevice.address})`, 'info');
+
+            // Update UI to show selection
+            document.querySelectorAll('.device-item').forEach((el, idx) => {
+                if (idx === index) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+        }
+
+        async function connectToDevice(address) {
+            if (!address) {
+                addLog('No device address specified', 'warning');
+                return;
+            }
+
+            addLog(`Connecting to device: ${address}`, 'info');
+            // Note: The current backend only supports connecting to the configured MAC
+            // This would require backend enhancement to support dynamic MAC changes
+            runAction('connect');
+        }
+
+        function closeDevicePanel() {
+            const panel = document.getElementById('device-panel');
+            if (panel) {
+                panel.style.display = 'none';
+            }
+        }
+
+        async function loadSavedDevices() {
+            addLog('Loading saved devices...', 'info');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'load_device_list' })
+                });
+                const payload = await response.json();
+
+                if (payload.ok && payload.devices) {
+                    const devices = payload.devices || [];
+                    addLog(`✅ Loaded ${devices.length} saved device(s)`, 'info');
+
+                    // Show device panel and populate list
+                    const panel = document.getElementById('device-panel');
+                    const listEl = document.getElementById('device-list');
+                    const titleEl = document.getElementById('device-panel-title');
+
+                    if (panel && listEl && titleEl) {
+                        panel.style.display = 'block';
+                        titleEl.textContent = `Saved Devices (${devices.length})`;
+
+                        if (devices.length === 0) {
+                            listEl.innerHTML = '<div class="device-empty">No saved devices</div>';
+                        } else {
+                            listEl.innerHTML = devices.map((device, idx) => {
+                                const lastSeen = device.last_seen ? new Date(device.last_seen).toLocaleString() : 'Never';
+                                return `
+                                    <div class="device-item" onclick="selectDevice(${idx})" id="device-${idx}">
+                                        <div>
+                                            <div class="device-name">${device.name}</div>
+                                            <div class="device-address">${device.address}</div>
+                                            <div class="device-last-seen">Last seen: ${lastSeen}</div>
+                                        </div>
+                                        <div class="device-actions">
+                                            <button class="primary" onclick="setDeviceTarget('${device.address}', '${device.name}'); event.stopPropagation();">Set Target</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                        }
+                    }
+
+                    // Store devices in a global variable for selection
+                    window.discoveredDevices = devices;
+                } else {
+                    addLog(`❌ Load failed: ${payload.message || 'Unknown error'}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Load failed: ${error.message}`, 'warning');
+            }
+        }
+
+        async function addDeviceManually() {
+            const macInput = document.getElementById('manual-mac-input');
+            const nameInput = document.getElementById('manual-device-name');
+            const mac = macInput?.value?.trim();
+            const name = nameInput?.value?.trim() || null;
+
+            if (!mac) {
+                addLog('❌ Please enter a MAC address', 'warning');
+                return;
+            }
+
+            addLog(`Adding device manually: ${mac}`, 'info');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add_device_manually',
+                        mac_address: mac,
+                        name: name
+                    })
+                });
+                const payload = await response.json();
+
+                if (payload.ok) {
+                    addLog(`✅ ${payload.message}`, 'info');
+                    macInput.value = '';
+                    nameInput.value = '';
+                    // Reload saved devices to show the new one
+                    await loadSavedDevices();
+                } else {
+                    addLog(`❌ ${payload.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Failed to add device: ${error.message}`, 'warning');
+            }
+        }
+
+        async function setDeviceTarget(address, name) {
+            addLog(`Setting target device: ${name} (${address})`, 'info');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'set_device',
+                        mac_address: address
+                    })
+                });
+                const payload = await response.json();
+
+                if (payload.ok) {
+                    addLog(`✅ ${payload.message}`, 'info');
+                    // Update the current device display
+                    const currentDeviceEl = document.getElementById('meta-current-device');
+                    if (currentDeviceEl) {
+                        currentDeviceEl.textContent = `${name} (${address})`;
+                        currentDeviceEl.className = 'meta-value good';
+                    }
+                } else {
+                    addLog(`❌ ${payload.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Failed to set device: ${error.message}`, 'warning');
+            }
+        }
+
+        async function clearDeviceCache() {
+            if (!confirm('Are you sure you want to clear all saved devices?')) {
+                return;
+            }
+
+            addLog('Clearing device cache...', 'info');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'clear_device_list' })
+                });
+                const payload = await response.json();
+
+                if (payload.ok) {
+                    addLog(`✅ ${payload.message}`, 'info');
+                    // Clear the device panel
+                    const listEl = document.getElementById('device-list');
+                    if (listEl) {
+                        listEl.innerHTML = '<div class="device-empty">Device cache cleared</div>';
+                    }
+                    window.discoveredDevices = [];
+                } else {
+                    addLog(`❌ ${payload.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Failed to clear cache: ${error.message}`, 'warning');
+            }
+        }
+
+        async function purgeDatabase() {
+            if (!confirm('⚠️ This will DELETE ALL data from the database!\n\nThis includes:\n- All sensor readings\n- All recording sessions\n- Device list\n\nAre you absolutely sure?')) {
+                return;
+            }
+
+            addLog('Purging database...', 'warning');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'purge_database' })
+                });
+                const payload = await response.json();
+
+                if (payload.ok) {
+                    addLog(`✅ ${payload.message}`, 'info');
+                    addLog('💡 Database is now empty and ready for distribution', 'info');
+                } else {
+                    addLog(`❌ ${payload.message}`, 'warning');
+                }
+            } catch (error) {
+                addLog(`Failed to purge database: ${error.message}`, 'warning');
+            }
+        }
+
+        async function restartApp() {
+            if (!confirm('⚠️ This will restart the application.\n\nYou will need to refresh this page after restart.\n\nContinue?')) {
+                return;
+            }
+
+            addLog('Restarting application...', 'warning');
+            try {
+                const response = await fetch('/api/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'restart_app' })
+                });
+                const payload = await response.json();
+
+                if (payload.ok) {
+                    addLog(`✅ ${payload.message}`, 'info');
+                    await waitForServerAndReload();
+                } else {
+                    addLog(`❌ ${payload.message}`, 'warning');
+                }
+            } catch (error) {
+                // Expected - connection will drop during restart
+                addLog('⏳ Application restarting... waiting for server', 'info');
+                await waitForServerAndReload();
+            }
+        }
+
+        async function waitForServerAndReload(maxAttempts = 25, intervalMs = 1000) {
+            addLog('🔎 Waiting for server to come back online...', 'info');
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, intervalMs));
+                try {
+                    const health = await fetch('/api/live', { cache: 'no-store' });
+                    if (health.ok) {
+                        addLog('✅ Server is back online. Reloading page...', 'info');
+                        setTimeout(() => window.location.reload(), 400);
+                        return;
+                    }
+                } catch (_) {
+                    // Expected while process is still restarting
+                }
+            }
+
+            addLog('⚠️ Server did not respond in time. Please refresh manually.', 'warning');
+        }
+
+        function togglePolling() {
+            const button = document.getElementById('polling-toggle');
+            pollingPaused = !pollingPaused;
+            if (button) {
+                button.textContent = pollingPaused ? 'Resume Polling' : 'Pause Polling';
+            }
+
+            if (pollingPaused) {
+                stopReplay(false);
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+                const statusEl = document.getElementById('connection-status');
+                if (statusEl) {
+                    statusEl.textContent = 'Polling paused';
+                }
+                addLog('HTTP polling paused');
+            } else {
+                stopReplay(false);
+                pollLiveData();
+                pollTimer = setInterval(pollLiveData, 2000);
+                addLog('HTTP polling resumed');
+            }
+
+            saveUiPreferences();
+        }
+
+        function updateSensors(data, options = {}) {
+            updateCount++;
+            lastLiveData = data; // Store for temp unit toggle
+
+            // Update primary sensors
+            if (data.voltage !== undefined) {
+                document.getElementById('voltage').textContent = data.voltage === null ? 'unavailable' : `${data.voltage} V`;
+                document.getElementById('voltage').className = data.voltage === null ? 'sensor-value unavailable' : 'sensor-value';
+            }
+
+            if (data.current !== undefined) {
+                document.getElementById('current').textContent = data.current === null ? 'unavailable' : `${data.current} A`;
+                document.getElementById('current').className = data.current === null ? 'sensor-value unavailable' : 'sensor-value';
+            }
+
+            if (data.power !== undefined) {
+                document.getElementById('power').textContent = data.power === null ? 'unavailable' : `${data.power} W`;
+                document.getElementById('power').className = data.power === null ? 'sensor-value unavailable' : 'sensor-value';
+            }
+
+            if (data.soc !== undefined) {
+                const socGated = data.soc === null && data.log_mode === 'decode_auto' && data.numeric_fields_present === true;
+                document.getElementById('soc').textContent = socGated
+                    ? 'gated (notify mode required)'
+                    : (data.soc === null ? 'unavailable' : `${data.soc} %`);
+                document.getElementById('soc').className = data.soc === null ? 'sensor-value unavailable' : 'sensor-value';
+            }
+
+            if (data.energy !== undefined) {
+                const energyGated = data.energy === null && data.log_mode === 'decode_auto' && data.numeric_fields_present === true;
+                const energyNotifyMissing = data.energy === null && (data.log_mode || '').toString().startsWith('notify_');
+                const hasEstimatedEnergy = data.estimated_energy_kwh !== null && data.estimated_energy_kwh !== undefined;
+                const energyEl = document.getElementById('energy');
+                energyEl.textContent = energyGated
+                    ? 'gated (notify mode required)'
+                    : (data.energy === null
+                        ? (hasEstimatedEnergy
+                            ? `${data.estimated_energy_kwh} kWh`
+                            : (energyNotifyMissing ? 'unavailable (not in notify packet)' : 'unavailable'))
+                        : `${data.energy} kWh`);
+                energyEl.title = (hasEstimatedEnergy && data.energy === null) ? 'Calculated from SOC' : '';
+                energyEl.className = (data.energy === null && !hasEstimatedEnergy)
+                    ? 'sensor-value unavailable'
+                    : 'sensor-value';
+            }
+
+            if (data.status !== undefined) {
+                document.getElementById('status').textContent = data.status;
+                document.getElementById('status').className = `sensor-value ${data.status}`;
+            }
+
+            // Update diagnostic sensors
+            if (data.confidence !== undefined) {
+                const conf = data.confidence || 'unknown';
+                document.getElementById('confidence').textContent = conf.toUpperCase();
+                document.getElementById('confidence').className = `sensor-value ${conf.toLowerCase()}`;
+                document.getElementById('attr-confidence').textContent = conf.toUpperCase();
+            }
+
+            if (data.verified !== undefined) {
+                const ver = data.verified === true || data.verified === 'true' ? 'true' : 'false';
+                document.getElementById('verified').textContent = ver;
+                document.getElementById('verified').className = ver === 'true' ? 'sensor-value verified' : 'sensor-value unverified';
+                document.getElementById('attr-verified').textContent = ver;
+            }
+
+            if (data.raw_payload !== undefined) {
+                const payload = data.raw_payload || 'N/A';
+                document.getElementById('payload').textContent = payload;
+                document.getElementById('attr-payload').textContent = payload;
+            }
+
+            const notifyModeActive = (data.log_mode || '').toString().startsWith('notify_');
+            const gatedText = notifyModeActive ? 'unavailable' : 'gated (notify mode required)';
+            const setExtended = (id, value, suffix = '') => {
+                const element = document.getElementById(id);
+                if (!element) return;
+                if (value === null || value === undefined || value === '') {
+                    element.textContent = gatedText;
+                    element.className = 'sensor-value unavailable';
+                    return;
+                }
+                element.textContent = suffix ? `${value} ${suffix}` : `${value}`;
+                element.className = 'sensor-value';
+            };
+
+            setExtended('ext-starter-voltage', data.starter_voltage, 'V');
+
+            // Temperature with unit conversion
+            const tempUnit = localStorage.getItem('tempUnit') || 'C';
+            const tempSuffix = tempUnit === 'F' ? '°F' : '°C';
+            const convertTemp = (celsius) => {
+                if (tempUnit === 'F' && celsius !== null && celsius !== undefined) {
+                    return (celsius * 9 / 5 + 32).toFixed(2);
+                }
+                return celsius;
+            };
+
+            setExtended('ext-temp-1', convertTemp(data.temperature_1), tempSuffix);
+            setExtended('ext-temp-2', convertTemp(data.temperature_2), tempSuffix);
+            setExtended('ext-temp-3', convertTemp(data.temperature_3), tempSuffix);
+            setExtended('ext-hist-1', data.hist_value_1);
+            setExtended('ext-hist-2', data.hist_value_2);
+            setExtended('ext-hist-3', data.hist_value_3);
+            setExtended('ext-hist-4', data.hist_value_4);
+            setExtended('ext-hist-5', data.hist_value_5);
+            setExtended('ext-hist-6', data.hist_value_6);
+            setExtended('ext-additional', data.additional_value);
+            setExtended('ext-sequence', data.sequence);
+
+            // Update metadata for live monitoring
+            const connectionStatusEl = document.getElementById('meta-connection-status');
+            const currentDeviceEl = document.getElementById('meta-current-device');
+            const notificationCountEl = document.getElementById('meta-notification-count');
+            const ageEl = document.getElementById('meta-age');
+            const tsEl = document.getElementById('meta-ts');
+            const capacityEl = document.getElementById('meta-capacity');
+            const capacityInputEl = document.getElementById('capacity-input');
+            const energySourceEl = document.getElementById('meta-energy-source');
+
+            if (connectionStatusEl) {
+                const connStatus = data.connection_status || (data.connected ? 'connected' : 'disconnected');
+                connectionStatusEl.textContent = connStatus;
+                connectionStatusEl.className = `meta-value ${(connStatus === 'connected') ? 'good' : 'warn'}`;
+                updateConnectionStatusIndicator(connStatus);
+            }
+            if (currentDeviceEl) {
+                if (data.current_device_mac && data.current_device_mac !== '00:00:00:00:00:00') {
+                    const deviceName = data.current_device_name || 'Unknown';
+                    currentDeviceEl.textContent = `${deviceName} (${data.current_device_mac})`;
+                    currentDeviceEl.className = 'meta-value good';
+                } else {
+                    currentDeviceEl.textContent = 'Not Set';
+                    currentDeviceEl.className = 'meta-value warn';
+                }
+            }
+            if (notificationCountEl) {
+                const count = data.notification_count || 0;
+                notificationCountEl.textContent = count.toLocaleString();
+                notificationCountEl.className = `meta-value ${(count > 0) ? 'good' : 'warn'}`;
+            }
+            if (ageEl) {
+                const ageText = data.last_update_age_text || data.last_payload_age_text || 'unknown';
+                const ageSec = data.last_update_age_sec || data.last_payload_age_sec;
+                ageEl.textContent = ageText;
+                ageEl.className = `meta-value ${(typeof ageSec === 'number' && ageSec <= 10) ? 'good' : 'warn'}`;
+            }
+            if (tsEl) {
+                tsEl.textContent = data.timestamp || 'unknown';
+            }
+            if (capacityEl) {
+                const configuredCapacity = Number(data.configured_capacity_kwh);
+                if (Number.isFinite(configuredCapacity) && configuredCapacity > 0) {
+                    capacityEl.textContent = `${configuredCapacity.toFixed(2)} kWh`;
+                    capacityEl.className = 'meta-value good';
+                    if (capacityInputEl && document.activeElement !== capacityInputEl) {
+                        capacityInputEl.value = configuredCapacity.toFixed(2);
+                        updateCapacityPreview();
+                    }
+                } else if (data.energy_source) {
+                    const match = data.energy_source.match(/capacity_([\d.]+)kWh/);
+                    if (match) {
+                        capacityEl.textContent = `${match[1]} kWh`;
+                        capacityEl.className = 'meta-value good';
+                    }
+                }
+            }
+            if (energySourceEl) {
+                const source = data.energy_source || 'unknown';
+                const displaySource = source.replace(/_/g, ' ').replace(/estimated soc capacity.*/, 'estimated from SOC');
+                energySourceEl.textContent = displaySource;
+                energySourceEl.className = 'meta-value';
+            }
+
+            updateHealthBadges(data);
+            updateCapacityStateBadge(data);
+            updateSettingsSummaryChips();
+            updateConnectionActionButtons(data);
+
+            if (!options.silent) {
+                addLog(`Update #${updateCount}: V=${data.voltage}V I=${data.current}A P=${data.power}W verified=${data.verified} confidence=${data.confidence}`);
+            }
+        }
+
+        function addLog(message, type = 'info') {
+            const logContent = document.getElementById('log-content');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            const level = resolveLogLevel(type);
+            entry.className = `log-entry ${type}`;
+            entry.dataset.level = level;
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            logContent.appendChild(entry);
+            applyLogFilters();
+            if (logFilters[level]) {
+                logContent.scrollTop = logContent.scrollHeight;
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log-content').innerHTML = '';
+            addLog('Log cleared');
+        }
+
+        function toggleIntegrationSummary() {
+            const content = document.getElementById('integration-summary-content');
+            const button = document.getElementById('summary-toggle');
+            if (!content || !button) {
+                return;
+            }
+
+            const isHidden = content.style.display === 'none';
+            content.style.display = isHidden ? 'block' : 'none';
+            button.textContent = isHidden ? 'Hide Summary' : 'Show Summary';
+            saveUiPreferences();
+        }
+
+        async function pollLiveData() {
+            if (pollingPaused) {
+                return;
+            }
+            if (pollInFlight) {
+                return;
+            }
+
+            pollInFlight = true;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const response = await fetch(`/api/live?_=${Date.now()}`, {
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                updateSensors(data, { silent: true });
+                captureFrame(data);
+                consecutivePollErrors = 0;
+
+                updateConnectionStatusIndicator(data.connection_status || (data.connected ? 'connected' : 'disconnected'));
+
+                // Only log when timestamp actually changes (new data arrived)
+                if (data.timestamp && data.timestamp !== lastSeenTs) {
+                    lastSeenTs = data.timestamp;
+                    addLog(`Live update: ts=${data.timestamp} status=${data.status}`, 'verbose');
+                }
+            } catch (error) {
+                consecutivePollErrors += 1;
+                const statusEl = document.getElementById('connection-status');
+                if (statusEl) {
+                    statusEl.textContent = 'HTTP polling unavailable';
+                }
+                const statusDotEl = document.querySelector('.status-indicator .status-dot');
+                if (statusDotEl) {
+                    statusDotEl.classList.remove('connected', 'reconnecting');
+                    statusDotEl.classList.add('disconnected');
+                }
+                if (consecutivePollErrors === 1 || consecutivePollErrors % 5 === 0) {
+                    addLog(`Polling error: ${error.message} (x${consecutivePollErrors})`, 'warning');
+                }
+            } finally {
+                pollInFlight = false;
+            }
+        }
+
+        // Simulate weak signal scenario
+        function simulateWeakSignal() {
+            updateSensors({
+                voltage: null,
+                current: null,
+                power: null,
+                soc: 100.0,
+                energy: 0.28,
+                status: 'unknown',
+                confidence: 'LOW',
+                verified: false,
+                raw_payload: '3c0e6c0c000000000000'
+            });
+            addLog('Simulated weak signal', 'warning');
+        }
+
+        // Simulate good signal scenario
+        function simulateGoodSignal() {
+            updateSensors({
+                voltage: 14.60,
+                current: 0.46,
+                power: 6.7,
+                soc: 100.0,
+                energy: 0.28,
+                status: 'charging',
+                confidence: 'HIGH',
+                verified: true,
+                raw_payload: '3c0e6c0c000000000000'
+            });
+            addLog('Simulated good signal');
+        }
+
+        const isHttpMode = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+        applyUiPreferences();
+        updateConnectionActionButtons({ connected: false, connection_status: 'disconnected' });
+        updateConnectionStatusIndicator('disconnected');
+        if (isHttpMode) {
+            window.__SIMULATOR_LIVE_MODE = true;
+            if (!pollingPaused) {
+                pollLiveData();
+                pollTimer = setInterval(pollLiveData, 2000);
+            } else {
+                const statusEl = document.getElementById('connection-status');
+                if (statusEl) {
+                    statusEl.textContent = 'Polling paused';
+                }
+            }
+        }
+
+        // Auto-update demo only in standalone mode (not live-injected mode)
+        if (!window.__SIMULATOR_LIVE_MODE) {
+            setInterval(() => {
+                const isGoodSignal = Math.random() > 0.3; // 70% good signal
+                if (isGoodSignal) {
+                    simulateGoodSignal();
+                } else {
+                    simulateWeakSignal();
+                }
+            }, 5000);
+
+            // Initial good signal
+            setTimeout(() => {
+                simulateGoodSignal();
+            }, 1000);
+        }
+
+        addLog('Ready: file mode = demo, http mode = live polling');
+        updateRecordingUI();
+        updateLogFilterButtons();
+        applyLogFilters();
+    </script>
+</body>
+
+</html>
