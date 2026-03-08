@@ -44,6 +44,12 @@ installer_output/
 # Release assets (created locally before upload)
 Renogy_Shunt300LS_Portable.zip
 
+# Local secret vaults
+*.vault.json
+*.secrets.json
+.secrets/
+vault/
+
 # Database
 device_list.json
 *.db

@@ -52,6 +52,14 @@ Only approvers may authorize code-signing release requests.
 
 If required secrets are missing, the signing workflow fails and does not publish signed assets.
 
+## Local Secret Vault (Maintainer Host)
+
+Use the provided scripts to keep SignPath secrets encrypted on the maintainer host:
+
+- `scripts/New-LocalSigningVault.ps1` creates an encrypted DPAPI vault file.
+- `scripts/Sync-GitHubSigningSecrets.ps1` pushes vault entries to GitHub Actions secrets without printing values.
+- `scripts/Start-SignedRelease.ps1 -Tag vX.Y.Z` triggers the signed release workflow after secrets are configured.
+
 ## Privacy Statement
 
 This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
