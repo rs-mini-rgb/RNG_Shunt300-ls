@@ -43,6 +43,11 @@ jobs:
       - name: Prepare build context
         shell: pwsh
         run: |
+          $notesFile = "RELEASE_NOTES_$env:RELEASE_TAG.md"
+          if (-not (Test-Path $notesFile)) {
+            $notesFile = "RELEASE_NOTES_v1.0.0.md"
+          }
+
           Copy-Item src\shunt300_live_simulator.py build\ -Force
           Copy-Item src\shunt300_live_ui.html build\ -Force
           Copy-Item src\shunt300_database.py build\ -Force
@@ -53,7 +58,7 @@ jobs:
           Copy-Item LICENSE.txt build\ -Force
           Copy-Item README.md build\ -Force
           Copy-Item QUICKSTART.md build\ -Force
-          Copy-Item RELEASE_NOTES_v1.0.0.md build\ -Force
+          Copy-Item $notesFile build\ -Force
 
       - name: Build executable (PyInstaller)
         shell: pwsh

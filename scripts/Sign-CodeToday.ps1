@@ -1,7 +1,7 @@
 param(
     [ValidateSet('Auto','SignPath','LocalSelfSigned')]
     [string]$Mode = 'Auto',
-    [string]$Tag = 'v1.0.0',
+    [string]$Tag = 'v1.0.1',
     [string]$Repo = 'rs-mini-rgb/RNG_Shunt300-ls',
     [string]$CertSubject = 'CN=rs-mini-rgb Community (Local Test Signing)'
 )
@@ -33,7 +33,7 @@ function Test-SignPathReady {
     return $true
 }
 
-function Ensure-BuildInputFiles {
+function Ensure-BuildInputFiles([string]$ReleaseNotesFile) {
     Copy-Item (Join-Path $repoRoot 'src\shunt300_live_simulator.py') $buildDir -Force
     Copy-Item (Join-Path $repoRoot 'src\shunt300_live_ui.html') $buildDir -Force
     Copy-Item (Join-Path $repoRoot 'src\shunt300_database.py') $buildDir -Force
@@ -46,7 +46,7 @@ function Ensure-BuildInputFiles {
     Copy-Item (Join-Path $repoRoot 'LICENSE.txt') $buildDir -Force
     Copy-Item (Join-Path $repoRoot 'README.md') $buildDir -Force
     Copy-Item (Join-Path $repoRoot 'QUICKSTART.md') $buildDir -Force
-    Copy-Item (Join-Path $repoRoot 'RELEASE_NOTES_v1.0.0.md') $buildDir -Force
+    Copy-Item (Join-Path $repoRoot $ReleaseNotesFile) $buildDir -Force
 }
 
 function New-OrGetLocalCodeSigningCert {
@@ -98,7 +98,12 @@ function Invoke-LocalSelfSignedFlow {
     Write-Host '=== Local Self-Signed Build + Sign ===' -ForegroundColor Cyan
     Write-Host 'This produces locally signed artifacts for immediate/internal use.' -ForegroundColor Yellow
 
-    Ensure-BuildInputFiles
+    $releaseNotesFile = "RELEASE_NOTES_${Tag}.md"
+    if (-not (Test-Path (Join-Path $repoRoot $releaseNotesFile))) {
+        $releaseNotesFile = 'RELEASE_NOTES_v1.0.0.md'
+    }
+
+    Ensure-BuildInputFiles -ReleaseNotesFile $releaseNotesFile
 
     Push-Location $buildDir
     try {
