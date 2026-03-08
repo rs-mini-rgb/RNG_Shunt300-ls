@@ -94,7 +94,11 @@ def get_resource_dir() -> Path:
 
 
 def resolve_resource_path(relative_path: str) -> Path:
-    """Resolve resource path across frozen/dev and legacy/current install layouts."""
+    """Resolve resource path across frozen/dev and legacy/current install layouts.
+
+    Ensures that the resolved path stays within the RESOURCE_DIR tree to avoid
+    serving files from unintended locations when given untrusted input.
+    """
     candidates = [
         RESOURCE_DIR / relative_path,
         APP_DIR / '_internal' / relative_path,
@@ -108,9 +112,19 @@ def resolve_resource_path(relative_path: str) -> Path:
     ])
 
     for candidate in candidates:
-        if candidate.exists():
-            return candidate
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            # If the path cannot be resolved (for example, due to invalid
+            # components), skip this candidate.
+            continue
 
+        # Only allow files that exist and are located within RESOURCE_DIR
+        if resolved.exists() and (resolved == RESOURCE_DIR or RESOURCE_DIR in resolved.parents):
+            return resolved
+
+    # Fall back to the first candidate; callers check for existence and will
+    # return a 404 if it does not exist.
     return candidates[0]
 
 
