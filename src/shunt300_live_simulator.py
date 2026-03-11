@@ -111,6 +111,17 @@ def resolve_resource_path(relative_path: str) -> Path:
         script_dir / '_internal' / relative_path,
     ])
 
+    # Resolve RESOURCE_DIR once to a canonical path so that symlinks and
+    # non-normalized components do not defeat the ancestry check below.
+    # If RESOURCE_DIR itself cannot be resolved (e.g. it does not exist yet),
+    # no candidate will pass resolved.exists(), so falling back to the
+    # unresolved value is safe: the loop will find no valid candidate and we
+    # return the guaranteed-nonexistent path below.
+    try:
+        resource_root = RESOURCE_DIR.resolve()
+    except OSError:
+        resource_root = RESOURCE_DIR
+
     for candidate in candidates:
         try:
             resolved = candidate.resolve()
@@ -120,7 +131,7 @@ def resolve_resource_path(relative_path: str) -> Path:
             continue
 
         # Only allow files that exist and are located within RESOURCE_DIR
-        if resolved.exists() and (resolved == RESOURCE_DIR or RESOURCE_DIR in resolved.parents):
+        if resolved.exists() and (resolved == resource_root or resource_root in resolved.parents):
             return resolved
 
     # Fall back to a guaranteed-under-RESOURCE_DIR, intentionally invalid path.
